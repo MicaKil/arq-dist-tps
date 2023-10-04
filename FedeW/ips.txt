@@ -1,0 +1,8 @@
+mpiuser@10.65.1.107
+mpiuser@10.65.1.114
+mpiuser@10.65.1.124
+mpiuser@10.65.1.102
+mpiuser@10.65.1.101
+mpiuser@10.65.1.115
+mpiuser@10.65.1.113
+mpiuser@10.65.1.104
