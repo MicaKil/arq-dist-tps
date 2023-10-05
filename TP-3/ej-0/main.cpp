@@ -29,7 +29,7 @@ void obtener_IP(char *respuesta);
 
 int main(int argc, char **argv) {
     int rank, total_procs, hostname_len;
-    char hostname[MPI_MAX_PROCESSOR_NAME];  // MPI_MAX_PROCESSOR_NAME = 
+    char hostname[MPI_MAX_PROCESSOR_NAME];  // MPI_MAX_PROCESSOR_NAME =
     char ip_address[40];
 
     MPI_Init(&argc, &argv);
@@ -37,9 +37,8 @@ int main(int argc, char **argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &total_procs);  // Cantidad total de procesos, se almacena en total_procs
     MPI_Get_processor_name(hostname, &hostname_len);  // Nombre de la máquina donde corre el proceso, se almacena en hostname
 
-    if (rank == 0) {
-        obtener_IP(ip_address);
-    }
+    obtener_IP(ip_address);
+
 
     MPI_Bcast(ip_address, 40, MPI_CHAR, 0, MPI_COMM_WORLD);  // Se envía la dirección IP a todos los procesos
 
