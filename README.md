@@ -1,4 +1,4 @@
-# Arquitecturas Distruidas
+# Arquitecturas Distribuidas
 ## Trabajos Prácticos
 
-Repo para guardas los TPs de la cátedra Arquictecturas Distribuidas.
+Repo para los trabajos prácticos de la cátedra Arquitecturas Distribuidas, Facultad de Ingeniería, UNCUYO.
