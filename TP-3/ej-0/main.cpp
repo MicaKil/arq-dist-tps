@@ -39,11 +39,10 @@ int main(int argc, char **argv) {
 
     obtener_IP(ip_address);
 
-
     MPI_Bcast(ip_address, 40, MPI_CHAR, 0, MPI_COMM_WORLD);  // Se envía la dirección IP a todos los procesos
 
     cout << "Hola Mundo! Soy el proceso " << rank << " de " << total_procs
-         << " corriendo en la máquina " << hostname << " IP= " << ip_address << endl;
+         << " corriendo en la máquina " << hostname << " IP = " << ip_address << endl;
 
     MPI_Finalize();
 
