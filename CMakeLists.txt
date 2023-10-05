@@ -15,4 +15,6 @@ add_executable(Arquitecturas_Distribuidas
         TP-1/ej4/primes_without_threads.cpp
         TP-3/ej-0/direccion_IP.cpp
         TP-3/ej-0/main.cpp
-        TP-3/ej-1/main.cpp)
+        TP-3/ej-1/main.cpp
+        TP-3/ej-2/main.cpp
+        TP-3/ej-2/main.cpp)
