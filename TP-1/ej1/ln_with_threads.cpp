@@ -33,8 +33,6 @@
 #include <vector>
 #include <string>
 
-using namespace std;
-
 volatile long double result = 0.0;
 
 // función para calcular una parte de la serie de Taylor en paralelo

@@ -32,7 +32,7 @@
 using namespace std;
 
 int main() {
-    long double x = 1500000.0;  // Valor predeterminado para x
+    long double x = 1500000.0;  // valor predeterminado para x
     string inputX;
 
     long double _2n_mas_1;
@@ -42,20 +42,20 @@ int main() {
 
     cout << "Ingrese el operando del logaritmo natural. Presione Enter para usar el valor predeterminado " << setprecision(15) << x << ":";
     getline(cin, inputX);
-    if (!inputX.empty()) { //si no es enter 
-        x = stold(inputX); //asigna el input a x
+    if (!inputX.empty()) { // si no es enter
+        x = stold(inputX); // asigna el input a x
     }
 
     cout << "Ingrese el número de hilos a emplear. Presione Enter para usar el valor predeterminado " << num_threads << ":";
     getline(cin, input_num_threads);
-    if (!input_num_threads.empty()) { //si no es enter 
-        num_threads = stoi(input_num_threads); //asigna el input a num_threads
+    if (!input_num_threads.empty()) {  // si no es enter
+        num_threads = stoi(input_num_threads);  // asigna el input a num_threads
     }
 
     //------------------------------------------------------------------------------------------
     cout << "\nCalculando...\n" << endl;
 
-    auto start_time1 = chrono::high_resolution_clock::now(); //empieza el clock
+    auto start_time1 = chrono::high_resolution_clock::now();  // empieza el clock
     
     long double result1 = cal_series(x);
 
@@ -69,7 +69,7 @@ int main() {
     //------------------------------------------------------------------------------------------
     cout << "Con Hilos:" << endl;
 
-    auto start_time2 = chrono::high_resolution_clock::now(); //empieza el clock
+    auto start_time2 = chrono::high_resolution_clock::now();  // empieza el clock
     
     long double result2 = cal_series_threads(num_threads, x);
 
@@ -80,7 +80,7 @@ int main() {
     cout << " - Tiempo de ejecución: " << duration2.count() << " ms\n" << endl;
     
     //------------------------------------------------------------------------------------------
-    double speed_up = ((double) duration1.count())/duration2.count(); //solo en 1 porque automáticamente castea el de abajo
+    double speed_up = ((double) duration1.count())/duration2.count();  // solo en 1 porque automáticamente castea el de abajo
     cout << "Speed up: " << speed_up << endl;
     return 0;
 }

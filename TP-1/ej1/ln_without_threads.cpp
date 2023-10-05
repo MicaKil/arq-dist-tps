@@ -27,8 +27,6 @@
 #include <cmath>
 #include <chrono>
 
-using namespace std;
-
 // func aux para calcular la serie
 long double cal_series(long double x) {
     long double _2n_mas_1; 
