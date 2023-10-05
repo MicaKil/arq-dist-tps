@@ -39,6 +39,7 @@
 #include <chrono>
 #include <mpi.h>
 #include "kmp.cpp"
+#include "direccion_IP.cpp"
 
 using namespace std;
 
@@ -54,8 +55,13 @@ unsigned int search_pattern_in_process(unsigned int pattern_index) {
 int main(int argc, char** argv) {
     MPI_Init(&argc, &argv);
     int num_procs, rank;
+    char ip_address[40];
     MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    auto start = chrono::high_resolution_clock::now();
+
+    obtener_IP(ip_address);
 
     if (rank == 0) {
         ifstream patterns_file("patrones.txt");
@@ -75,12 +81,12 @@ int main(int argc, char** argv) {
     unsigned int remainder = num_patterns % num_procs;
 
     // distribuir los patrones entre los procesos
-    vector<unsigned int> pattern_counts(num_procs, patterns_per_process);
-    for (int i = 0; i < remainder; i++) {
+    vector<unsigned int> pattern_counts(num_procs, patterns_per_process);  // inicializar con la cantidad de patrones por proceso
+    for (int i = 0; i < remainder; i++) {  // distribuir el resto de patrones
         pattern_counts[i]++;
     }
 
-    vector<unsigned int> pattern_counts_prefix(num_procs);
+    vector<unsigned int> pattern_counts_prefix(num_procs);  // vector con el índice inicial de patrones que debe buscar cada proceso
     pattern_counts_prefix[0] = 0;
     for (int i = 1; i < num_procs; i++) {
         pattern_counts_prefix[i] = pattern_counts_prefix[i - 1] + pattern_counts[i - 1];
@@ -90,21 +96,19 @@ int main(int argc, char** argv) {
     unsigned int start_index = pattern_counts_prefix[rank];
     unsigned int end_index = start_index + pattern_counts[rank];
 
-    auto start = chrono::high_resolution_clock::now();
+
     for (unsigned int i = start_index; i < end_index; i++) {
-        local_count += search_pattern_in_process(i);
+        local_count = search_pattern_in_process(i);
+        cout << "El patrón " << i << " aparece " << local_count << " veces. Buscado por IP = " << ip_address << ". Proceso número: "<< rank << " Patrón: " << patterns[i] << endl;
     }
+
+    // sincronizar todos los procesos antes de continuar
+    MPI_Barrier(MPI_COMM_WORLD);
+
     auto end = chrono::high_resolution_clock::now();
     chrono::duration<double> duration = end - start;
 
-    unsigned int total_count;
-    MPI_Reduce(&local_count, &total_count, 1, MPI_UNSIGNED, MPI_SUM, 0, MPI_COMM_WORLD);
-
     if (rank == 0) {
-        cout << "Resultados:" << endl;
-        for (int i = 0; i < num_patterns; i++) {
-            cout << "El patrón " << i << " " << patterns[i] << " aparece " << search_pattern_in_process(i) << " veces." << endl;
-        }
         cout << "\nTiempo total: " << duration.count() << " segundos." << endl;
         //cout << "\nSpeed up: " << duration.count() / (duration.count() * num_procs) << endl;
     }

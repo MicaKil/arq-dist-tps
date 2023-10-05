@@ -75,7 +75,7 @@ int main() {
     getline(text_file, text);
     text_file.close();
 
-    int num_patterns = patterns.size();
+    unsigned long int num_patterns = patterns.size();
     
     // sin hilos
     cout << "Sin Hilos:" << endl;
@@ -97,7 +97,7 @@ int main() {
     auto start_threads = chrono::high_resolution_clock::now();
     vector<thread> threads; //almacena objetos std::thread
     for (int i = 0; i < num_patterns; i++) {
-        threads.push_back(thread(search_pattern_in_thread, i)); //crea un nuevo objeto std::thread 
+        threads.push_back(thread(search_pattern_in_thread, i)); //crea un nuevo objeto std::thread
     } //push_back es un método de la clase std::vector agregar un elemento al final del vector
     for (int i = 0; i < num_patterns; i++) { // espera a que todos los hilos terminen su ejecución mediante join()
         threads[i].join();
