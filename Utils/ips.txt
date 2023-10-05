@@ -1,4 +1,3 @@
-mpiuser@10.65.1.101
 mpiuser@10.65.1.102
 mpiuser@10.65.1.103
 mpiuser@10.65.1.104

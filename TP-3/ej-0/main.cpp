@@ -30,13 +30,11 @@ int main(int argc, char **argv) {
     char ip_address[40];
 
     MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);  // Identificador del proceso, se almacena en rank
-    MPI_Comm_size(MPI_COMM_WORLD, &total_procs);  // Cantidad total de procesos, se almacena en total_procs
-    MPI_Get_processor_name(hostname, &hostname_len);  // Nombre de la máquina donde corre el proceso, se almacena en hostname
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);  // identificador del proceso, se almacena en rank
+    MPI_Comm_size(MPI_COMM_WORLD, &total_procs);  // cantidad total de procesos, se almacena en total_procs
+    MPI_Get_processor_name(hostname, &hostname_len);  // nombre de la máquina donde corre el proceso, se almacena en hostname
 
     obtener_IP(ip_address);
-
-    MPI_Bcast(ip_address, 40, MPI_CHAR, 0, MPI_COMM_WORLD);  // Se envía la dirección IP a todos los procesos
 
     cout << "Hola Mundo! Soy el proceso " << rank << " de " << total_procs
          << " corriendo en la máquina " << hostname << " IP = " << ip_address << endl;
