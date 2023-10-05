@@ -7,7 +7,7 @@ Recibe como argumento un puntero que apunta a un array de char en donde se depos
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <arpa/inet.h>
 #include<iostream>
 
@@ -18,7 +18,7 @@ void obtener_IP(char *respuesta){
     if(mi_socket==0){
         cout << "Error creando el socket" << endl;
     }
-    struct sockaddr_in servidor_addr, my_addr;
+    struct sockaddr_in servidor_addr{}, my_addr{};
     servidor_addr.sin_family = AF_INET;
     servidor_addr.sin_addr.s_addr = inet_addr("179.0.132.58"); 
     servidor_addr.sin_port = htons(80);
@@ -30,5 +30,4 @@ void obtener_IP(char *respuesta){
     getsockname(mi_socket, (struct sockaddr *) &my_addr, &len);
     inet_ntop(AF_INET, &my_addr.sin_addr, respuesta, 40); 
     close(mi_socket);  
-    return;
 }

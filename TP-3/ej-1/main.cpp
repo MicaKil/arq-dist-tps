@@ -9,7 +9,6 @@
 //Ayuda: ln(1500000)=14.2209756660724
 
 #include <iostream>
-#include <string>
 #include <iomanip>
 #include <cmath>
 #include <chrono>
@@ -36,8 +35,12 @@ int main(int argc, char **argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    long double x = 1500000.0;  // valor predeterminado para x
-//    string inputX;
+    long double x;
+    if (argc < 2) {
+        x = 1500000.0;  // valor predeterminado para x
+    } else {
+        x = stold(argv[1]); // asigna el input a x
+    }
 
     int num_terms = 10000000;
     int terms_per_process = num_terms / size;
@@ -45,16 +48,6 @@ int main(int argc, char **argv) {
     int end_term = (rank + 1) * terms_per_process - 1;
 
     long double result = 0.0;
-
-//    if (rank == 0) {
-//        cout << "Ingrese el operando del logaritmo natural. Presione Enter para usar el valor predeterminado " << setprecision(15) << x << ":";
-//        getline(cin, inputX);
-//        if (!inputX.empty()) { // si no es enter
-//            x = stold(inputX); // asigna el input a x
-//        }
-//    }
-//
-//    MPI_Bcast(&x, 1, MPI_LONG_DOUBLE, 0, MPI_COMM_WORLD);
 
     //------------------------------------------------------------------------------------------
     cout << "\nCalculando en proceso " << rank << "...\n" << endl;

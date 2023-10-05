@@ -20,12 +20,9 @@
 
 #include <iostream>
 #include <mpi.h>
-#include <cstring>
 #include "direccion_IP.cpp"
 
 using namespace std;
-
-void obtener_IP(char *respuesta);
 
 int main(int argc, char **argv) {
     int rank, total_procs, hostname_len;
