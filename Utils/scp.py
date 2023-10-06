@@ -1,7 +1,7 @@
 import os
 import subprocess
 import sys
-f = open('ips.txt' ,'r')
+f = open('ips_cp.txt' ,'r')
 fileToCopy = sys.argv[1]
 path = "/".join(fileToCopy.split("/")[:-1])
 print(fileToCopy, path)
