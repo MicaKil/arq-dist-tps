@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
         pattern_counts_prefix[i] = pattern_counts_prefix[i - 1] + pattern_counts[i - 1];
     }
 
-    unsigned int local_count = 0;
+    unsigned int local_count;
     unsigned int start_index = pattern_counts_prefix[rank];
     unsigned int end_index = start_index + pattern_counts[rank];
 
