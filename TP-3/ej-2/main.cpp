@@ -26,11 +26,18 @@
 // las máquinas disponibles.
 // b) Tome nota del tiempo de ejecución y calcule el speedup respecto a un solo proceso.
 // c) Compare los resultados con los obtenidos en el ejercicio N°2 del trabajo práctico N°1.
-
-// Ayuda: El patrón 0 aparece 14 veces, el patrón 1 aparece 3 veces, el patrón 6 aparece 4 veces, el patrón 9 aparece
-// 3622 veces, el patrón 11 aparece 2 veces, el patrón 13 aparece 6 veces, el patrón 16 aparece 2 veces, el patrón 18
-// aparece 6 veces, el patrón 21 aparece 2 veces, el patrón 27 aparece 6 veces, todos los demás patrones aparecen 0
-// veces.
+//
+// Ayuda: El patrón 0 aparece 14 veces,
+// el patrón 1 aparece 3 veces,
+// el patrón 6 aparece 4 veces,
+// el patrón 9 aparece 3622 veces,
+// el patrón 11 aparece 2 veces,
+// el patrón 13 aparece 6 veces,
+// el patrón 16 aparece 2 veces,
+// el patrón 18 aparece 6 veces,
+// el patrón 21 aparece 2 veces,
+// el patrón 27 aparece 6 veces,
+// todos los demás patrones aparecen 0 veces.
 
 #include <iostream>
 #include <fstream>
@@ -44,11 +51,9 @@
 using namespace std;
 
 vector<string> patterns;
-string text;
 
-// busca un patrón en el texto utilizando MPI
-unsigned int search_pattern_in_process(unsigned int pattern_index) {
-    unsigned int count = count_pattern_occurrences(patterns[pattern_index], text);
+unsigned int search_pattern_in_process(const string& pattern, const string& text) {
+    unsigned int count = count_pattern_occurrences(pattern, text);
     return count;
 }
 
@@ -63,54 +68,45 @@ int main(int argc, char** argv) {
 
     obtener_IP(ip_address);
 
-    if (rank == 0) {
-        ifstream patterns_file("patrones.txt");
-        string pattern;
-        while (getline(patterns_file, pattern)) {
-            patterns.push_back(pattern);
-        }
-        patterns_file.close();
-
-        ifstream text_file("texto.txt");
-        getline(text_file, text);
-        text_file.close();
+    ifstream patterns_file("patrones.txt");
+    string pattern;
+    while (getline(patterns_file, pattern)) {
+        patterns.push_back(pattern);
     }
+    patterns_file.close();
+
+    ifstream text_file("texto.txt");
+    string text;
+    getline(text_file, text);
+    text_file.close();
 
     unsigned int num_patterns = patterns.size();
     unsigned int patterns_per_process = num_patterns / num_procs;
     unsigned int remainder = num_patterns % num_procs;
 
-    // distribuir los patrones entre los procesos
-    vector<unsigned int> pattern_counts(num_procs, patterns_per_process);  // inicializar con la cantidad de patrones por proceso
-    for (int i = 0; i < remainder; i++) {  // distribuir el resto de patrones
-        pattern_counts[i]++;
-    }
+    unsigned int start_index = rank * patterns_per_process;
+    unsigned int end_index = start_index + patterns_per_process;
 
-    vector<unsigned int> pattern_counts_prefix(num_procs);  // vector con el índice inicial de patrones que debe buscar cada proceso
-    pattern_counts_prefix[0] = 0;
-    for (int i = 1; i < num_procs; i++) {
-        pattern_counts_prefix[i] = pattern_counts_prefix[i - 1] + pattern_counts[i - 1];
+    if (rank < remainder) {
+        start_index += rank;
+        end_index += rank + 1;
+    } else {
+        start_index += remainder;
+        end_index += remainder;
     }
 
     unsigned int local_count;
-    unsigned int start_index = pattern_counts_prefix[rank];
-    unsigned int end_index = start_index + pattern_counts[rank];
-
-
     for (unsigned int i = start_index; i < end_index; i++) {
-        local_count = search_pattern_in_process(i);
-        cout << "El patrón " << i << " aparece " << local_count << " veces. Buscado por IP = " << ip_address << ". Proceso número: "<< rank << " Patrón: " << patterns[i] << endl;
+        local_count = search_pattern_in_process(patterns[i], text);
+        cout << "El patrón " << i << " aparece " << local_count << " veces. Buscado por IP = " << ip_address <<
+             ". Proceso número: " << rank << ". Patrón: " << patterns[i] << endl;
     }
-
-    // sincronizar todos los procesos antes de continuar
-    MPI_Barrier(MPI_COMM_WORLD);
 
     auto end = chrono::high_resolution_clock::now();
     chrono::duration<double> duration = end - start;
 
     if (rank == 0) {
         cout << "\nTiempo total: " << duration.count() << " segundos." << endl;
-        //cout << "\nSpeed up: " << duration.count() / (duration.count() * num_procs) << endl;
     }
 
     MPI_Finalize();

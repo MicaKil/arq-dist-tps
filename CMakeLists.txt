@@ -19,5 +19,5 @@ add_executable(Arquitecturas_Distribuidas
         TP-3/ej-2/main.cpp
         TP-3/ej-2/kmp.cpp
         TP-3/ej-2/direccion_IP.cpp
-        Utils/main.cpp
-        Utils/globals.h)
+        TP-3/ej-3/main.cpp
+)

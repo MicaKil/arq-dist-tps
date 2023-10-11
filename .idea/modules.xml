@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/Arquitecturas-Distribuidas.iml" filepath="$PROJECT_DIR$/.idea/Arquitecturas-Distribuidas.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/arq-dist-tps.iml" filepath="$PROJECT_DIR$/.idea/arq-dist-tps.iml" />
     </modules>
   </component>
