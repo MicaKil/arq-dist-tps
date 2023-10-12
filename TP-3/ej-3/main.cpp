@@ -40,7 +40,7 @@
 using namespace std;
 
 // función para imprimir los elementos en las esquinas de una matriz
-void printCornerElements(const vector<vector<float>>& matrix, int size) {
+void print_corner_elements(const vector<vector<float>>& matrix, int size) {
     cout << "Esquina Superior Izquierda: " << matrix[0][0] << endl;
     cout << "Esquina Superior Derecha: " << matrix[0][size - 1] << endl;
     cout << "Esquina Inferior Izquierda: " << matrix[size - 1][0] << endl;
@@ -90,7 +90,7 @@ int main(int argc, char* argv[]) {
 
     // imprimir resultados
     if (rank == 0) {
-        printCornerElements(result, rows_per_process);
+        print_corner_elements(result, rows_per_process);
         cout << "Resultado de la sumatoria: " << total_sum << endl;
         cout << "Tiempo de ejecución: " << duration.count() << " segundos." << endl;
     }
