@@ -54,18 +54,33 @@ int main(int argc, char* argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    int N = 300; // tamaño de la matriz
+    if (argc < 2 && rank == 0) {
+        cout << "Debe ingresar el tamaño de la matriz" << endl;
+        return 1;
+    }
+
+    int N = stoi(argv[1]); // tamaño de la matriz
+
     int rows_per_process = N / size; // filas por proceso
 
     vector<vector<float>> matrix1(N, vector<float>(N, 0.1));  // crea la matriz 1 y la llena con 0.1
     vector<vector<float>> matrix2(N, vector<float>(N, 0.2));  // crea la matriz 2 y la llena con 0.2
-    vector<vector<float>> result(rows_per_process, vector<float>(N));
-
+    vector<vector<float>> result(N, vector<float>(N)); // result es una matriz de tamaño rows_per_process x N
 
     auto start = chrono::high_resolution_clock::now();
 
+    int start_index = rank * rows_per_process;
+    int end_index;
+    if (rank == size - 1) {
+        end_index = N;
+    } else {
+        end_index = (rank + 1) * rows_per_process;
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
     // multiplicación de matrices
-    for (int i = rank * rows_per_process; i < (rank + 1) * rows_per_process; ++i) {
+    for (int i = start_index; i < end_index; ++i) {
         for (int j = 0; j < N; ++j) {
             result[i - rank * rows_per_process][j] = 0.0;
             for (int k = 0; k < N; ++k) {
@@ -73,16 +88,17 @@ int main(int argc, char* argv[]) {
             }
         }
     }
+    MPI_Barrier(MPI_COMM_WORLD);
 
     // reducción de datos y cálculo de la suma total de los elementos de la matriz resultante
-    float total_sum = 0.0;
     float local_sum = 0.0;
-    for (int i = 0; i < rows_per_process; ++i) {
+    for (int i = 0; i < N; ++i) {
         for (int j = 0; j < N; ++j) {
             local_sum += result[i][j];
         }
     }
 
+    float total_sum = 0.0;
     MPI_Reduce(&local_sum, &total_sum, 1, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
 
     auto end = chrono::high_resolution_clock::now();
