@@ -1,5 +1,5 @@
 //
-// Created by micae on 11/10/2023.
+// Created by micaela on 11/10/2023.
 //
 
 // Escriba un programa que busque todos los números primos menores a un número N
@@ -82,7 +82,7 @@ int main(int argc, char* argv[]) {
     vector<int> prime_counts(size);
 
     // Reunir el número de primos encontrados en cada proceso
-    MPI_Allgather(&local_prime_count, 1, MPI_INT, prime_counts.data(), 1, MPI_INT, MPI_COMM_WORLD);
+    MPI_Allgatherv(&local_prime_count, 1, MPI_INT, prime_counts.data(), 1, MPI_INT, MPI_COMM_WORLD);
 
     // Calcular la cantidad total de números primos encontrados
     int total_prime_count = 0;
