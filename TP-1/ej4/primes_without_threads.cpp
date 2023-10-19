@@ -2,6 +2,8 @@
 #include <vector>
 #include <chrono>
 
+using namespace std;
+
 bool isPrime(long long int n) {
     if (n <= 1) return false;
     if (n <= 3) return true;
@@ -12,30 +14,30 @@ bool isPrime(long long int n) {
     return true;
 }
 
-std::chrono::duration<double> primes_without_threads(int N) {
-    auto start_time = std::chrono::high_resolution_clock::now();
+chrono::duration<double> primes_without_threads(long long int N) {
+    auto start_time = chrono::high_resolution_clock::now();
 
-    std::vector<long long int> primes;
+    vector<long long int> primes;
     for (long long int num = 2; num < N; ++num) {
         if (isPrime(num)) {
             primes.push_back(num);
         }
     }
 
-    auto end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> duration = end_time - start_time;
+    auto end_time = chrono::high_resolution_clock::now();
+    chrono::duration<double> duration = end_time - start_time;
 
-    std::cout << "Cantidad de números primos menores que N: " << primes.size() << std::endl;
+    cout << "Cantidad de números primos menores que N: " << primes.size() << endl;
 
     //------------------------------------------------------------------------------------------
-    int num_primes_to_display = std::min(10, static_cast<int>(primes.size()));
-    std::cout << "Los 10 mayores números primos: ";
-    for (int i = primes.size() - 1; i >= primes.size() - num_primes_to_display; --i) {
-        std::cout << primes[i] << " ";
+    int num_primes_to_display = min(10, static_cast<int>(primes.size()));
+    cout << "Los 10 mayores números primos: ";
+    for (int i = (int) primes.size() - 1; i >= primes.size() - num_primes_to_display; --i) {
+        cout << primes[i] << " ";
     }
-    std::cout << std::endl;
+    cout << endl;
 
-    std::cout << "Tiempo de ejecución: " << duration.count() << " segundos." << std::endl;
+    cout << "Tiempo de ejecución: " << duration.count() << " segundos." << endl;
 
     return duration;
 }

@@ -66,19 +66,20 @@
 #include <algorithm>
 #include <mutex>
 #include <atomic>
-
 #include "primes_without_threads.cpp" 
 
-std::mutex mtx; // mutex para garantizar la exclusión mutua al modificar el vector de primos
-std::vector<long long int> primes; // vector para almacenar los números primos encontrados
-std::atomic<long long int> current(2); // variable atómica para mantener el valor actual a ser comprobado
+using namespace std;
+
+mutex mtx; // mutex para garantizar la exclusión mutua al modificar el vector de primos
+vector<long long int> primes; // vector para almacenar los números primos encontrados
+atomic<long long int> current(2); // variable atómica para mantener el valor actual a ser comprobado
 
 void findPrimes(long long int N) {
     while (true) {
         long long int num = current++; // atomically incrementa y obtiene el valor actual
         if (num >= N) break; // si supera N, salimos del bucle
         if (isPrime(num)) { // comprueba si num es primo
-            std::lock_guard<std::mutex> lock(mtx); // bloquea el mutex para modificar el vector de primos
+            lock_guard<mutex> lock(mtx); // bloquea el mutex para modificar el vector de primos
             primes.push_back(num); // agrega el número primo al vector
         }
     }
@@ -86,56 +87,56 @@ void findPrimes(long long int N) {
 
 int main() {
     long long int N = 1000000; // valor predeterminado de N
-    std::string input_N;
-    std::cout << "Ingrese el valor de N: Presione Enter para usar el valor predeterminado " << std::setprecision(15) << N << ":";
-    getline(std::cin, input_N);
+    string input_N;
+    cout << "Ingrese el valor de N: Presione Enter para usar el valor predeterminado " << setprecision(15) << N << ":";
+    getline(cin, input_N);
     if (!input_N.empty()) { //si no es enter...
-        N = stold(input_N);
+        N = stoll(input_N);
     }
 
     //------------------------------------------------------------------------------------------
     // Sin hilos
-    std::cout << "Sin Hilos:" << std::endl;
-    std::cout << "Calculando..." << std::endl;
-    std::chrono::duration<double> duration = primes_without_threads(N); 
+    cout << "Sin Hilos:" << endl;
+    cout << "Calculando..." << endl;
+    chrono::duration<double> duration = primes_without_threads(N); 
 
     //------------------------------------------------------------------------------------------
     // Con hilos
 
-    auto start_time = std::chrono::high_resolution_clock::now(); 
+    auto start_time = chrono::high_resolution_clock::now(); 
 
-    int num_threads = std::thread::hardware_concurrency(); // obtiene el número de núcleos de CPU disponibles
-    std::vector<std::thread> threads;
+    int num_threads = (int) thread::hardware_concurrency(); // obtiene el número de núcleos de CPU disponibles
+    vector<thread> threads;
 
     for (int i = 0; i < num_threads; ++i) {
-        threads.push_back(std::thread(findPrimes, N)); // crea y lanza hilos que buscan primos concurrentemente
+        threads.push_back(thread(findPrimes, N)); // crea y lanza hilos que buscan primos concurrentemente
     }
 
     for (auto& thread : threads) {
         thread.join(); // espera a que todos los hilos terminen
     }
 
-    auto end_time = std::chrono::high_resolution_clock::now(); 
-    std::chrono::duration<double> duration_threads = end_time - start_time; 
+    auto end_time = chrono::high_resolution_clock::now(); 
+    chrono::duration<double> duration_threads = end_time - start_time; 
 
     //------------------------------------------------------------------------------------------
-    std::sort(primes.begin(), primes.end()); // ordena los números primos encontrados
+    sort(primes.begin(), primes.end()); // ordena los números primos encontrados
 
-    std::cout << "Cantidad de números primos menores que N: " << primes.size() << std::endl;
+    cout << "Cantidad de números primos menores que N: " << primes.size() << endl;
 
-    int num_primes_to_display = std::min(10, static_cast<int>(primes.size()));
-    std::cout << "Los 10 mayores números primos: ";
-    for (int i = primes.size() - 1; i >= primes.size() - num_primes_to_display; --i) {
-        std::cout << primes[i] << " ";
+    int num_primes_to_display = min(10, static_cast<int>(primes.size()));
+    cout << "Los 10 mayores números primos: ";
+    for (int i = (int) primes.size() - 1; i >= primes.size() - num_primes_to_display; --i) {
+        cout << primes[i] << " ";
     }
-    std::cout << std::endl;
+    cout << endl;
 
-    std::cout << "Cantidad de núcleos usados: " << num_threads << std::endl;
-    std::cout << "Tiempo de ejecución: " << duration_threads.count() << " segundos." << std::endl;
+    cout << "Cantidad de núcleos usados: " << num_threads << endl;
+    cout << "Tiempo de ejecución: " << duration_threads.count() << " segundos." << endl;
     
     //------------------------------------------------------------------------------------------
     double speed_up = duration.count() / duration_threads.count(); 
-    std::cout << "\nSpeed up: " << speed_up << std::endl; 
+    cout << "\nSpeed up: " << speed_up << endl; 
 
     return 0;
 }
