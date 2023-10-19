@@ -24,8 +24,14 @@
 #include <cmath>
 #include <mpi.h>
 #include <algorithm>  // sort y min
+#include <tuple>
 
 using namespace std;
+
+struct result {
+    vector<long long int> primes;
+    int count;
+};
 
 // función para verificar si un número es primo
 bool is_prime(long long int n) {
@@ -53,6 +59,57 @@ bool pseudo_sieve(long long int n, vector<long long int> &primes) {
     return all_of(primes.begin(), primes.end(), [n](long long int prime) {
         return n % prime != 0;
     });
+}
+
+result calc_primes(int size, int rank, vector<long long int> &candidates, const string& type){
+    vector<int> counts(size);
+    vector<int> displs(size);
+    int elements_per_process = (int) candidates.size() / size;
+    int remainder_candidates = (int) candidates.size() % size;
+    int start = 0;
+    for (int i = 0; i < size; ++i) {
+        counts[i] = elements_per_process +
+                    (i < remainder_candidates ? 1 : 0);  // (i < remainder_candidates ? 1 : 0) es 1 si i < remainder_candidates, 0 si no
+        displs[i] = start;
+        start += counts[i];
+    }
+
+    vector<long long int> local;
+    for (int i = displs[rank]; i < displs[rank] + counts[rank]; ++i) {
+        if (type == "is_prime") {
+            if (is_prime(candidates[i])) {
+                local.push_back(candidates[i]);
+            }
+        } else if (type == "pseudo_sieve") {
+            if (pseudo_sieve(candidates[i], local)) {
+                local.push_back(candidates[i]);
+            }
+        }
+    }
+
+    int local_count = (int) local.size();
+
+    vector<int> local_counts(size);
+    // MPI_Allgather toma el valor de local_count de cada proceso y lo guarda en local_counts de todos los procesos
+    MPI_Allgather(&local_count, 1, MPI_INT, local_counts.data(), 1, MPI_INT, MPI_COMM_WORLD);
+
+    vector<int> primes_displs(size);
+    start = 0;
+    for (int i = 0; i < size; ++i) {
+        primes_displs[i] = start;
+        start += local_counts[i];
+    }
+
+    int total_count = primes_displs[size - 1] + local_counts[size - 1];  // suma de todos los elementos de local_counts
+    vector<long long int> primes(total_count);
+
+    // MPI_Allgatherv toma el valor de local de cada proceso y lo guarda en primes de todos los procesos
+    MPI_Allgatherv(local.data(), local_count, MPI_LONG_LONG_INT,
+                   primes.data(), local_counts.data(), primes_displs.data(), MPI_LONG_LONG_INT, MPI_COMM_WORLD);
+
+    sort(primes.begin(), primes.end(), greater<>());
+
+    return result{primes, total_count};
 }
 
 int main(int argc, char* argv[]) {
@@ -101,43 +158,34 @@ int main(int argc, char* argv[]) {
         start_lesser += counts_lesser[i];
     }
 
-    vector<long long int> local_primes;
+    vector<long long int> local_lesser;
     for (int i = displs_lesser[rank]; i < displs_lesser[rank] + counts_lesser[rank]; ++i) {
         if (is_prime(less_than_sqrt_N[i])) {
-            local_primes.push_back(less_than_sqrt_N[i]);
+            local_lesser.push_back(less_than_sqrt_N[i]);
         }
     }
 
-    int local_primes_count = (int) local_primes.size();
+    int local_lesser_count = (int) local_lesser.size();
 
-    vector<int> primes_counts(size);
-    // MPI_Allgather toma el valor de local_primes_count de cada proceso y lo guarda en primes_counts de todos los procesos
-    MPI_Allgather(&local_primes_count, 1, MPI_INT, primes_counts.data(), 1, MPI_INT, MPI_COMM_WORLD);
+    vector<int> lesser_counts(size);
+    // MPI_Allgather toma el valor de local_lesser_count de cada proceso y lo guarda en lesser_counts de todos los procesos
+    MPI_Allgather(&local_lesser_count, 1, MPI_INT, lesser_counts.data(), 1, MPI_INT, MPI_COMM_WORLD);
 
-    vector<int> primes_displs(size);
+    vector<int> lesser_primes_displs(size);
     start_lesser = 0;
     for (int i = 0; i < size; ++i) {
-        primes_displs[i] = start_lesser;
-        start_lesser += primes_counts[i];
+        lesser_primes_displs[i] = start_lesser;
+        start_lesser += lesser_counts[i];
     }
 
-    int total_primes_count = primes_displs[size - 1] + primes_counts[size - 1];  // suma de todos los elementos de primes_counts
-    vector<long long int> primes(total_primes_count);
+    int total_lesser_count = lesser_primes_displs[size - 1] + lesser_counts[size - 1];  // suma de todos los elementos de lesser_counts
+    vector<long long int> lesser_primes(total_lesser_count);
 
-    // MPI_Allgatherv toma el valor de local_primes de cada proceso y lo guarda en primes de todos los procesos
-    MPI_Allgatherv(local_primes.data(), local_primes_count, MPI_LONG_LONG_INT,
-                   primes.data(), primes_counts.data(), primes_displs.data(), MPI_LONG_LONG_INT, MPI_COMM_WORLD);
+    // MPI_Allgatherv toma el valor de local_lesser de cada proceso y lo guarda en lesser_primes de todos los procesos
+    MPI_Allgatherv(local_lesser.data(), local_lesser_count, MPI_LONG_LONG_INT,
+                   lesser_primes.data(), lesser_counts.data(), lesser_primes_displs.data(), MPI_LONG_LONG_INT, MPI_COMM_WORLD);
 
-    sort(primes.begin(), primes.end(), greater<>());
-
-    if (rank == 0) {
-        cout << "Primos hasta sqrt(" << N << "):" << endl;
-        for (int i = 0; i < min(10, total_primes_count); ++i) {
-            cout << primes[i] << " ";
-        }
-        cout << endl;
-    }
-
+    sort(lesser_primes.begin(), lesser_primes.end(), greater<>());
 
     // cálculo de primos mayores que sqrt(N) ---------------------------------------------------------------------------
 
@@ -145,16 +193,16 @@ int main(int argc, char* argv[]) {
     vector<int> displs_greater;
     int elements_per_process_greater = (int) greater_than_sqrt_N.size() / size;
     int remainder_greater = (int) greater_than_sqrt_N.size() % size;
-    start_lesser = 0;
+    int start_greater = 0;
     for (int i = 0; i < size; ++i) {
         counts_greater.push_back(elements_per_process_greater + (i < remainder_greater ? 1 : 0));
-        displs_greater.push_back(start_lesser);
-        start_lesser += counts_greater[i];
+        displs_greater.push_back(start_greater);
+        start_greater += counts_greater[i];
     }
 
     vector<long long int> local_greater;
     for (int i = displs_greater[rank]; i < displs_greater[rank] + counts_greater[rank]; ++i) {
-        if (pseudo_sieve(greater_than_sqrt_N[i], primes)) {
+        if (pseudo_sieve(greater_than_sqrt_N[i], lesser_primes)) {
             local_greater.push_back(greater_than_sqrt_N[i]);
         }
     }
@@ -163,27 +211,30 @@ int main(int argc, char* argv[]) {
     vector<int> greater_counts(size);
     MPI_Allgather(&local_greater_count, 1, MPI_INT, greater_counts.data(), 1, MPI_INT, MPI_COMM_WORLD);
 
-    vector<int> greater_displs(size);
-    start_lesser = 0;
+    vector<int> greater_primes_displs(size);
+    start_greater = 0;
     for (int i = 0; i < size; ++i) {
-        greater_displs[i] = start_lesser;
-        start_lesser += greater_counts[i];
+        greater_primes_displs[i] = start_greater;
+        start_greater += greater_counts[i];
     }
 
-    int total_greater_count = greater_displs[size - 1] + greater_counts[size - 1];
+    int total_greater_count = greater_primes_displs[size - 1] + greater_counts[size - 1];
     vector<long long int> greater_primes(total_greater_count);
     MPI_Allgatherv(local_greater.data(), local_greater_count, MPI_LONG_LONG_INT,
-                   greater_primes.data(), greater_counts.data(), greater_displs.data(), MPI_LONG_LONG_INT, MPI_COMM_WORLD);
+                   greater_primes.data(), greater_counts.data(), greater_primes_displs.data(), MPI_LONG_LONG_INT, MPI_COMM_WORLD);
 
     sort(greater_primes.begin(), greater_primes.end(), greater<> ());
 
+    vector<long long int> total_primes(total_lesser_count + total_greater_count);
+    merge(lesser_primes.begin(), lesser_primes.end(), greater_primes.begin(), greater_primes.end(), total_primes.begin(), greater<>());
+
     if (rank == 0) {
-        cout << "Primos mayores que sqrt(" << N << "):" << endl;
-        for (int i = 0; i < min(10, total_greater_count); ++i) {
-            cout << greater_primes[i] << " ";
+        cout << "Primos mayores que sqrt(" << N << "): ";
+        for (int i = 0; i < min(10, total_lesser_count + total_greater_count); ++i) {
+            cout << total_primes[i] << " ";
         }
         cout << endl;
-        cout << "Cantidad de primos menores que " << N << ": " << total_primes_count + total_greater_count << endl;
+        cout << "Cantidad de primos menores que " << N << ": " << total_lesser_count + total_greater_count << endl;
     }
 
     MPI_Finalize();
