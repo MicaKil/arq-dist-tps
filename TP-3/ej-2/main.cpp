@@ -26,7 +26,7 @@
 // las máquinas disponibles.
 // b) Tome nota del tiempo de ejecución y calcule el speedup respecto a un solo proceso.
 // c) Compare los resultados con los obtenidos en el ejercicio N°2 del trabajo práctico N°1.
-//
+
 // Ayuda: El patrón 0 aparece 14 veces,
 // el patrón 1 aparece 3 veces,
 // el patrón 6 aparece 4 veces,

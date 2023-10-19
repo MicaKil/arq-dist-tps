@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     if (argc < 2 && rank == 0) {
-        cout << "Debe ingresar el tamaño de la matriz" << endl;
+        cout << "Debe ingresar el tamaño de la matriz." << endl;
         return 1;
     }
 
@@ -88,15 +88,18 @@ int main(int argc, char* argv[]) {
             }
         }
     }
+
     MPI_Barrier(MPI_COMM_WORLD);
 
     // reducción de datos y cálculo de la suma total de los elementos de la matriz resultante
     float local_sum = 0.0;
-    for (int i = 0; i < N; ++i) {
+    for (int i = start_index; i < end_index; ++i) {
         for (int j = 0; j < N; ++j) {
-            local_sum += result[i][j];
+            local_sum += result[i - rank * rows_per_process][j];
         }
     }
+
+    MPI_Barrier(MPI_COMM_WORLD);
 
     float total_sum = 0.0;
     MPI_Reduce(&local_sum, &total_sum, 1, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
