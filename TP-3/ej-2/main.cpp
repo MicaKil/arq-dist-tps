@@ -107,6 +107,7 @@ int main(int argc, char** argv) {
 
     if (rank == 0) {
         cout << "\nTiempo total: " << duration.count() << " segundos." << endl;
+        cout << "Cantidad de procesos: " << num_procs << endl;
     }
 
     MPI_Finalize();

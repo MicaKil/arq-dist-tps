@@ -33,6 +33,7 @@
 //y el resultado de la sumatoria será 5.71526*10^8.
 
 #include <iostream>
+#include <iomanip>
 #include <vector>
 #include <chrono>
 #include <mpi.h>
@@ -110,8 +111,9 @@ int main(int argc, char* argv[]) {
     // imprimir resultados
     if (rank == 0) {
         print_corner_elements(result, rows_per_process);
-        cout << "Resultado de la sumatoria: " << total_sum << endl;
+        cout << "Resultado de la sumatoria: " << setprecision(15) << total_sum << endl;
         cout << "Tiempo de ejecución: " << duration.count() << " segundos." << endl;
+        cout << "Cantidad de procesos: " << size << endl;
     }
 
     MPI_Finalize();
