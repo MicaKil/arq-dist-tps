@@ -136,6 +136,7 @@ int main(int argc, char* argv[]) {
     }
 
     auto start_time = chrono::high_resolution_clock::now();
+
     // cálculo de candidatos -------------------------------------------------------------------------------------------
     auto sqrt_N = (long long int) sqrt(N);
 
