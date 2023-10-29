@@ -71,6 +71,7 @@ int main(int argc, char **argv) {
     if (rank == 0) {
         cout << "Resultado: " << setprecision(15) << global_result << endl;
         cout << "Tiempo de ejecución: " << duration.count() << " ms\n" << endl;
+        cout << "Cantidad de procesos: " << size << endl;
     }
 
     MPI_Finalize();

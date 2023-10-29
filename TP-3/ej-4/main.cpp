@@ -183,8 +183,9 @@ int main(int argc, char* argv[]) {
         }
         cout << "... " << endl;
         cout << "Cantidad de primos menores que " << N << ": " << total_lesser_count + total_greater_count << endl;
-
         cout << "Tiempo de ejecución: " << duration.count() << " ms." << endl;
+        cout << "Cantidad de procesos: " << size << endl;
+
     }
 
     MPI_Finalize();
