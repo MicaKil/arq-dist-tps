@@ -21,11 +21,7 @@
 // podrían arrojar resultados según la variable de menor longitud. Puede usar
 // máscaras para transformar todas las variables al formato requerido.
 
-#include <iostream>
-#include <string>
-#include <iomanip>
 #include <cmath>
-#include <chrono>
 
 // func aux para calcular la serie
 long double cal_series(long double x) {

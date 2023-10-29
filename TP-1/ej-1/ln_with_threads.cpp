@@ -28,12 +28,12 @@
 #include <iostream>
 #include <iomanip>
 #include <cmath>
-#include <chrono>
 #include <thread>
 #include <vector>
 #include <string>
 
 volatile long double result = 0.0;
+using namespace std;
 
 // función para calcular una parte de la serie de Taylor en paralelo
 void cal_series_part(long double term, int start, int end) {
@@ -71,5 +71,5 @@ long double cal_series_threads(int num_threads, long double x) {
     }
     
     //long double result2 = 2 * result;
-    return 2 * result;  // El logaritmo natural es el doble serie
+    return 2 * result;  // El logaritmo natural es el doble de serie
 }

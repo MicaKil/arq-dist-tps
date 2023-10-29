@@ -50,7 +50,7 @@
 #include <mutex>
 
 using namespace std;
-std::mutex output_mutex; // cerradura global para garantizar que solo un hilo pueda imprimir a la vez
+mutex output_mutex; // cerradura global para garantizar que solo un hilo pueda imprimir a la vez
 
 vector<string> patterns;
 string text;
@@ -59,7 +59,7 @@ string text;
 void search_pattern_in_thread(int pattern_index) { //pattern_index indica el índice del patrón que debe buscar
     int count = count_pattern_occurrences(patterns[pattern_index], text);
     // bloquea la impresión de resultados para evitar intercalaciones
-    std::lock_guard<std::mutex> lock(output_mutex); // par que solo un hilo a la vez pueda imprimir
+    lock_guard<mutex> lock(output_mutex); // para que solo un hilo a la vez pueda imprimir
     cout << "   El patrón " << pattern_index << " " << patterns[pattern_index] << " aparece " << count << " veces." << endl;
 }
 
@@ -95,10 +95,10 @@ int main() {
     cout << "Calculando..." << endl;
     
     auto start_threads = chrono::high_resolution_clock::now();
-    vector<thread> threads; //almacena objetos std::thread
+    vector<thread> threads; //almacena objetos thread
     for (int i = 0; i < num_patterns; i++) {
-        threads.push_back(thread(search_pattern_in_thread, i)); //crea un nuevo objeto std::thread
-    } //push_back es un método de la clase std::vector agregar un elemento al final del vector
+        threads.push_back(thread(search_pattern_in_thread, i)); //crea un nuevo objeto thread
+    } //push_back es un método de la clase vector agregar un elemento al final del vector
     for (int i = 0; i < num_patterns; i++) { // espera a que todos los hilos terminen su ejecución mediante join()
         threads[i].join();
     }

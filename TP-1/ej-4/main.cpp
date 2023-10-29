@@ -71,8 +71,6 @@ using namespace std;
 
 mutex mtx_less_than_sqrt_N;
 mutex mtx_greater_than_sqrt_N;
-mutex mtx_lesser_primes;
-mutex mtx_greater_primes;
 
 struct result {
     vector<long long int> primes;
@@ -103,6 +101,9 @@ bool pseudo_sieve(long long int n, vector<long long int> primes) {
     });
 }
 
+// calcula los números primos en el rango [start, end) de un vector de candidatos
+// is_prime: calcula los números primos menores que sqrt(N)
+// pseudo_sieve: calcula los números primos mayores que sqrt(N) con los números primos menores que sqrt(N) calculados previamente
 result calc_primes(int start, int end, vector<long long int> &candidates, const string &type = "is_prime",
                    const vector<long long int> &less = vector<long long int>()) {
     vector<long long int> local;
@@ -118,15 +119,13 @@ result calc_primes(int start, int end, vector<long long int> &candidates, const 
         }
     }
 
-    int local_count = static_cast<int>(local.size());
-
-    sort(local.rbegin(), local.rend());
-
+    int local_count = (int) (local.size());
     return result{local, local_count};
 }
 
 
 int main() {
+    // entrada de datos -----------------------------------------------------------------------
     long long int N = 1000000; // valor predeterminado de N
     string input_N;
     cout << "Ingrese el valor de N: Presione Enter para usar el valor predeterminado " << setprecision(15) << N << ":";
@@ -148,6 +147,7 @@ int main() {
 
     vector<long long int> less_than_sqrt_N;
     vector<long long int> greater_than_sqrt_N;
+    
     less_than_sqrt_N.push_back(2);  // 2 es el único número primo par
     // candidatos a primos son todos los números impares entre 3 y N
     for (long long int i = 3; i <= sqrt_N; i += 2) {
@@ -157,6 +157,7 @@ int main() {
         greater_than_sqrt_N.push_back(i);
     }
 
+    // copia de los vectores de candidatos para usarlos con hilos después
     vector<long long int> threads_less_than_sqrt_N(less_than_sqrt_N.size());
     copy(less_than_sqrt_N.begin(), less_than_sqrt_N.end(), threads_less_than_sqrt_N.begin());
 
@@ -165,15 +166,18 @@ int main() {
 
     //------------------------------------------------------------------------------------------
     // sin hilos
+    
     cout << "Sin Hilos:" << endl;
     cout << "Calculando..." << endl;
 
     auto start_time = chrono::high_resolution_clock::now();
 
+    // cálculo de primos hasta sqrt(N) 
     result result_less = calc_primes(0, (int) less_than_sqrt_N.size(), less_than_sqrt_N);
     vector<long long int> lesser_primes = result_less.primes;
     int total_lesser_count = result_less.count;
 
+    // cálculo de primos mayores que sqrt(N)
     result result_greater = calc_primes(0, (int) greater_than_sqrt_N.size(), greater_than_sqrt_N, "pseudo_sieve", lesser_primes);
     vector<long long int> greater_primes = result_greater.primes;
     int total_greater_count = result_greater.count;
@@ -181,13 +185,22 @@ int main() {
     auto end_time = chrono::high_resolution_clock::now();
     auto duration = chrono::duration_cast<chrono::milliseconds>(end_time - start_time);
 
+    int total_count_no_threads = total_lesser_count + total_greater_count;
+    vector<long long int> total_primes_no_threads(total_count_no_threads);
+    sort(lesser_primes.begin(), lesser_primes.end(), greater<long long int>());
+    sort(greater_primes.begin(), greater_primes.end(), greater<long long int>());
+    merge(lesser_primes.begin(), lesser_primes.end(),
+          greater_primes.begin(), greater_primes.end(),
+          total_primes_no_threads.begin(), greater<long long int>());
+
+    // impresión de resultados
     cout << "Primos menores que " << N << ": ";
-    for (int i = 0; i < min(10, total_lesser_count + total_greater_count); ++i) {
-        cout << greater_primes[i] << " ";
+    for (int i = 0; i < min(10, total_count_no_threads); ++i) {
+        cout << total_primes_no_threads[i] << " ";
     }
     cout << "... " << endl;
 
-    cout << "Cantidad de primos menores que " << N << ": " << total_lesser_count + total_greater_count << endl;
+    cout << "Cantidad de primos menores que " << N << ": " << total_count_no_threads << endl;
     cout << "Tiempo de ejecución: " << duration.count() << " ms." << endl;
 
     //------------------------------------------------------------------------------------------
@@ -195,41 +208,50 @@ int main() {
 
     cout << "Con Hilos:" << endl;
     cout << "Calculando..." << endl;
-
+    
+    // reordenar los vectores para que los hilos tengan un trabajo más equitativo
     reorder(threads_less_than_sqrt_N);
     reorder(threads_greater_than_sqrt_N);
 
     start_time = chrono::high_resolution_clock::now();
 
     vector<thread> threads;
-    vector<result> results(num_threads);
-    vector<long long int> threads_lesser_primes;
+    vector<result> results(num_threads);  // vector de resultados de cada hilo
+    vector<long long int> threads_lesser_primes;  // vector de primos menores que sqrt(N) para usar en el cálculo de primos mayores que sqrt(N)
+    int total_lesser_count_threads = 0;
 
+    // cálculo de primos hasta sqrt(N)
     for (int i = 0; i < num_threads; i++) {
         int start = i * ((int) threads_less_than_sqrt_N.size() / num_threads);
-        int end = (i == num_threads - 1) ? (int) threads_less_than_sqrt_N.size() : (i + 1) * ((int) threads_less_than_sqrt_N.size() / num_threads);
-        threads.emplace_back([&results, i, start, end, &threads_less_than_sqrt_N, &threads_lesser_primes]() {
+        int end = (i == num_threads - 1) ? (int) threads_less_than_sqrt_N.size() : (i + 1) * ((int) threads_less_than_sqrt_N.size() / num_threads); // si es el último hilo, le da el resto de los números
+        threads.emplace_back([&results, i, start, end, &threads_less_than_sqrt_N, &threads_lesser_primes, &total_lesser_count_threads]() {  // emplace_back: agrega un elemento al final del vector
             result r = calc_primes(start, end, threads_less_than_sqrt_N);
-            std::lock_guard<std::mutex> lock(mtx_less_than_sqrt_N);
+            lock_guard<mutex> lock(mtx_less_than_sqrt_N);
             results[i] = r;
-            threads_lesser_primes.insert(threads_lesser_primes.end(), r.primes.begin(), r.primes.end());
+            threads_lesser_primes.insert(threads_lesser_primes.end(), r.primes.begin(), r.primes.end());  // inserta los primos encontrados
+            total_lesser_count_threads += r.count;
         });
     }
 
     for (int i = 0; i < num_threads; i++) {
-        threads[i].join();
+        threads[i].join();  // espera a que todos los hilos terminen
     }
 
-    results.clear();
-    threads.clear();
+    // cálculo de primos mayores que sqrt(N)
+    results.clear();  // limpia el vector de resultados para usarlo de nuevo
+    threads.clear();  // idem con el vector de hilos
+    vector<long long int> threads_greater_primes;
+    int total_greater_count_threads = 0;
 
     for (int i = 0; i < num_threads; i++) {
         int start = i * ((int) threads_greater_than_sqrt_N.size() / num_threads);
         int end = (i == num_threads - 1) ? (int) threads_greater_than_sqrt_N.size() : (i + 1) * ((int) threads_greater_than_sqrt_N.size() / num_threads);
-        threads.emplace_back([&results, i, start, end, &threads_greater_than_sqrt_N, &threads_lesser_primes]() {
+        threads.emplace_back([&results, i, start, end, &threads_greater_than_sqrt_N, &threads_lesser_primes, &threads_greater_primes, &total_greater_count_threads]() {
             result r = calc_primes(start, end, threads_greater_than_sqrt_N, "pseudo_sieve", threads_lesser_primes);
-            std::lock_guard<std::mutex> lock(mtx_greater_than_sqrt_N);
+            lock_guard<mutex> lock(mtx_greater_than_sqrt_N);
             results[i] = r;
+            threads_greater_primes.insert(threads_greater_primes.end(), r.primes.begin(), r.primes.end());
+            total_greater_count_threads += r.count;
         });
     }
 
@@ -237,15 +259,14 @@ int main() {
         threads[i].join();
     }
 
-    vector<long long int> threads_greater_primes;
-    for (int i = 0; i < num_threads; i++) {
-        threads_greater_primes.insert(threads_greater_primes.end(), results[i].primes.begin(), results[i].primes.end());
-    }
-
+    // unión de resultados
+    sort(threads_lesser_primes.begin(), threads_lesser_primes.end(), greater<long long int>());
     sort(threads_greater_primes.begin(), threads_greater_primes.end(), greater<long long int>());
 
     vector<long long int> total_primes;
-    total_primes.reserve(threads_lesser_primes.size() + threads_greater_primes.size());
+    int total_count_threads = total_lesser_count_threads + total_greater_count_threads;
+    total_primes.reserve(total_count_threads);
+
     merge(threads_lesser_primes.begin(), threads_lesser_primes.end(),
           threads_greater_primes.begin(), threads_greater_primes.end(),
           back_inserter(total_primes), greater<long long int>());
@@ -254,11 +275,11 @@ int main() {
     auto threads_duration = chrono::duration_cast<chrono::milliseconds>(end_time - start_time);
 
     cout << "Primos menores que " << N << ": ";
-    for (int i = 0; i < min(10, static_cast<int>(total_primes.size())); ++i) {
+    for (int i = 0; i < min(10, (int) (total_count_threads)); ++i) {
         cout << total_primes[i] << " ";
     }
     cout << "... " << endl;
-    cout << "Cantidad de primos menores que " << N << ": " << total_primes.size() << endl;
+    cout << "Cantidad de primos menores que " << N << ": " << total_count_threads << endl;
     cout << "Tiempo de ejecución: " << threads_duration.count() << " ms." << endl;
 
     double speed_up = ((double) duration.count())/(double) threads_duration.count(); //solo en 1 porque automáticamente castea el de abajo
