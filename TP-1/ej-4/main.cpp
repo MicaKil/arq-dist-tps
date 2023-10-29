@@ -71,6 +71,8 @@ using namespace std;
 
 mutex mtx_less_than_sqrt_N;
 mutex mtx_greater_than_sqrt_N;
+mutex mtx_lesser_primes;
+mutex mtx_greater_primes;
 
 struct result {
     vector<long long int> primes;
@@ -201,22 +203,21 @@ int main() {
 
     vector<thread> threads;
     vector<result> results(num_threads);
+    vector<long long int> threads_lesser_primes;
 
     for (int i = 0; i < num_threads; i++) {
         int start = i * ((int) threads_less_than_sqrt_N.size() / num_threads);
         int end = (i == num_threads - 1) ? (int) threads_less_than_sqrt_N.size() : (i + 1) * ((int) threads_less_than_sqrt_N.size() / num_threads);
-        threads.emplace_back([&results, i, start, end, &threads_less_than_sqrt_N]() {
-            results[i] = calc_primes(start, end, threads_less_than_sqrt_N);
+        threads.emplace_back([&results, i, start, end, &threads_less_than_sqrt_N, &threads_lesser_primes]() {
+            result r = calc_primes(start, end, threads_less_than_sqrt_N);
+            std::lock_guard<std::mutex> lock(mtx_less_than_sqrt_N);
+            results[i] = r;
+            threads_lesser_primes.insert(threads_lesser_primes.end(), r.primes.begin(), r.primes.end());
         });
     }
 
     for (int i = 0; i < num_threads; i++) {
         threads[i].join();
-    }
-
-    vector<long long int> threads_lesser_primes;
-    for (int i = 0; i < num_threads; i++) {
-        threads_lesser_primes.insert(threads_lesser_primes.end(), results[i].primes.begin(), results[i].primes.end());
     }
 
     results.clear();
@@ -226,7 +227,9 @@ int main() {
         int start = i * ((int) threads_greater_than_sqrt_N.size() / num_threads);
         int end = (i == num_threads - 1) ? (int) threads_greater_than_sqrt_N.size() : (i + 1) * ((int) threads_greater_than_sqrt_N.size() / num_threads);
         threads.emplace_back([&results, i, start, end, &threads_greater_than_sqrt_N, &threads_lesser_primes]() {
-            results[i] = calc_primes(start, end, threads_greater_than_sqrt_N, "pseudo_sieve", threads_lesser_primes);
+            result r = calc_primes(start, end, threads_greater_than_sqrt_N, "pseudo_sieve", threads_lesser_primes);
+            std::lock_guard<std::mutex> lock(mtx_greater_than_sqrt_N);
+            results[i] = r;
         });
     }
 
